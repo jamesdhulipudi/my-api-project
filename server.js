@@ -1,89 +1,113 @@
-// --- 1. Import Libraries ---
 const express = require('express');
-const { Pool } = require('pg');
 const cors = require('cors');
-require('dotenv').config(); // This loads the .env file
+const { Pool } = require('pg');
+const dotenv = require('dotenv');
 
-// --- 2. Initialize App ---
+// Load environment variables from .env file
+dotenv.config();
+
 const app = express();
-const port = process.env.PORT || 3001; // Use port 3001 locally
+const port = process.env.PORT || 3000;
 
-// --- 3. Setup Middleware ---
-app.use(cors()); // Allow cross-origin requests (for your frontends)
-app.use(express.json()); // Allow app to read JSON in request bodies
+// --- CORS Configuration (The Fix) ---
+// Define all domains allowed to access this API.
+// 1. http://localhost:4200 (For local Angular development)
+// 2. https://[YOUR-ANGULAR-FRONTEND-URL] (Your live Render static site)
+const allowedOrigins = [
+    'http://localhost:4200',
+    'https://dhulipudibank.onrender.com' // <<< IMPORTANT: REPLACE THIS WITH YOUR ACTUAL RENDER FRONTEND URL
+];
 
-// --- 4. Configure Database Connection (CRITICAL) ---
-// This pool will use the variables from your .env file
+const corsOptions = {
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, or same-origin requests)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log(`CORS blocked request from origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'), false);
+        }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    optionsSuccessStatus: 204
+};
+
+// Apply CORS Middleware
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// Database connection using Pool
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  connectionString: process.env.DATABASE_URL,
+  // Required for connecting to PostgreSQL on platforms like Render
   ssl: {
-    rejectUnauthorized: false // Required for Aiven
+    rejectUnauthorized: false
   }
 });
 
-pool.connect()
-    .then(client => {
-        console.log('Successfully connected to PostgreSQL!');
-        client.release(); // Release the client back to the pool
-    })
-    .catch(err => {
-      console.error('***DATABASE CONNECTION FAILED***', err);
-      console.error('Check your .env variables (DB_HOST, DB_USER, etc.) and ensure PostgreSQL service is running.');
-        // You can exit the app here if the connection is mandatory
-        // process.exit(1); 
-    });
+// Helper function to query the database
+async function query(sql) {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(sql);
+    client.release();
+    return result.rows;
+  } catch (err) {
+    console.error('Database Query Error:', err);
+    throw err; // Re-throw the error to be handled by the route
+  }
+}
 
-// --- 5. Define API Endpoints ---
+// --- API Endpoints ---
 
-// Test endpoint
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'API is working!' });
-});
-
-// GET all Customers
+// 1. Get All Customers
 app.get('/api/customers', async (req, res) => {
-    try {
-        const result = await pool.query('select * from public.customers');
-        res.json(result.rows);
-    } catch (err) {
-        // 🚨 CRITICAL: Use console.error to write to the terminal
-        // Log the ENTIRE error object for maximum detail
-        console.error('--- DB QUERY FAILED MARKER ---');
-        console.error(err); 
-        console.error('------------------------------');
-
-        // Send a generic error response to the client
-        res.status(500).json({ error: 'Internal server error' });
-    }
+  try {
+    const customers = await query(`
+      SELECT customer_id, first_name, last_name, email, phone_number, address, created_at
+      FROM customers;
+    `);
+    res.json(customers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch customers.' });
+  }
 });
 
-// GET all Accounts
+// 2. Get All Accounts
 app.get('/api/accounts', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM Accounts');
-    res.json(rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Internal server error' });
+    const accounts = await query(`
+      SELECT account_id, customer_id, balance, account_type, created_at
+      FROM accounts;
+    `);
+    res.json(accounts);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch accounts.' });
   }
 });
 
-// GET all Transactions
+// 3. Get All Transactions
 app.get('/api/transactions', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM Transactions');
-    res.json(rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Internal server error' });
+    // Note: ORDER BY ensures transactions are chronologically sensible
+    const transactions = await query(`
+      SELECT transaction_id, account_id, amount, transaction_type, transaction_date
+      FROM transactions
+      ORDER BY transaction_date DESC;
+    `);
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch transactions.' });
   }
 });
 
-// --- 6. Start The Server ---
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
+// Fallback Route
+app.get('/', (req, res) => {
+  res.send('Bank API is running. Access /api/customers, /api/accounts, or /api/transactions');
+});
+
+// Start Server
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
