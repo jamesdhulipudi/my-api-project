@@ -37,10 +37,25 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// --- Database Connection Setup (FIXED FOR ROBUST DEPLOYMENT) ---
+let connectionString = process.env.DATABASE_URL;
+
+// FALLBACK: If DATABASE_URL is not set, try to construct it from individual variables
+// This is done because some platforms/setups use separate DB_HOST, DB_USER, etc.
+if (!connectionString && process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD) {
+    console.log("Constructing database connection string from individual DB_* environment variables.");
+    connectionString = `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME}`;
+}
+
+if (!connectionString) {
+    console.error("FATAL ERROR: Database connection failed. DATABASE_URL or individual DB_* variables are not set in the environment.");
+}
+
 // Database connection using Pool
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // Required for connecting to PostgreSQL on platforms like Render
+  // Use the connection string (either full URL or constructed)
+  connectionString: connectionString,
+  // Required for connecting to PostgreSQL on platforms like Render or Aiven
   ssl: {
     rejectUnauthorized: false
   }
