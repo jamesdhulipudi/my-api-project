@@ -11,14 +11,18 @@ const port = process.env.PORT || 3000;
 
 // --- CORS Configuration (The Fix) ---
 // Define all domains allowed to access this API.
+// !!! CRITICAL: The URL below MUST be replaced with your live Angular frontend URL (e.g., https://my-dashboard-xyz.onrender.com)
+const angularFrontendUrl = process.env.ANGULAR_FRONTEND_URL || 'https://dhulipudibank.onrender.com'; 
+
 const allowedOrigins = [
     'http://localhost:4200',
-    'https://dhulipudibank.onrender.com' // <<< IMPORTANT: REPLACE THIS WITH YOUR ACTUAL RENDER FRONTEND URL
+    angularFrontendUrl // This variable should hold your full HTTPS URL
 ];
 
 const corsOptions = {
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, or same-origin requests)
+        // Also allow local Angular dev server and the specified live Render URL
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -39,7 +43,6 @@ app.use(express.json());
 let connectionString = process.env.DATABASE_URL;
 
 // FALLBACK: If DATABASE_URL is not set, try to construct it from individual variables
-// The constructed URL will NOT include the ?sslmode=require parameter, so we handle SSL explicitly below.
 if (!connectionString && process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASSWORD) {
     console.log("Constructing database connection string from individual DB_* environment variables.");
     connectionString = `postgres://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME}`;
