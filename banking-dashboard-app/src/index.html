@@ -2,12 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>BankingDashboardApp</title>
+  <title>Bank of Dhulipudi Dashboard</title>
   <base href="/">
+  <meta name="description" content="Admin portal for managing customers, accounts, and transactions at Bank of Dhulipudi.">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
-<body>
+<body style="margin:0; background-color:#f9fafb; font-family:Arial, sans-serif;">
   <app-root></app-root>
+  <style>
+    app-root:empty::before {
+      content: 'Loading Bank of Dhulipudi...';
+      display: block;
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.2rem;
+      color: #555;
+    }
+  </style>
 </body>
 </html>
