@@ -13,24 +13,19 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-			"outputPath": "dist/banking-dashboard-app/browser",
-            "browser": "src/main.ts",
-            "tsConfig": "tsconfig.app.json",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.css"
-            ],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
-          },
+			  "outputPath": "dist/banking-dashboard-app",
+			  "tsConfig": "tsconfig.app.json",
+			  "browser": "src/main.ts",
+			  "assets": [
+				{
+				  "glob": "**/*",
+				  "input": "public"
+				}
+			  ],
+			  "styles": [
+				"src/styles.css"
+			  ]
+			 },
           "configurations": {
             "production": {
               "budgets": [
