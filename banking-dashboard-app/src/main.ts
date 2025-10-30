@@ -1,3 +1,4 @@
+import 'zone.js';
 import { bootstrapApplication } from '@angular/platform-browser';
 // FIX: Changed './app/app.component' to the correct './app/app' 
 // based on your local file structure (app.ts)
