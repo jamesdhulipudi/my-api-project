@@ -17,7 +17,7 @@ app.use(cors({
 // --- CORS Configuration (The Fix) ---
 // Define all domains allowed to access this API.
 // !!! CRITICAL: The URL below MUST be replaced with your live Angular frontend URL (e.g., https://my-dashboard-xyz.onrender.com)
-const angularFrontendUrl = process.env.ANGULAR_FRONTEND_URL || 'https://dhulipudibank.onrender.com'; 
+const angularFrontendUrl = process.env.ANGULAR_FRONTEND_URL || 'https://bankofdhulipudi.onrender.com'; 
 
 const allowedOrigins = [
     'http://localhost:4200',
