@@ -9,6 +9,11 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cors({
+  origin: 'https://bankofdhulipudi.onrender.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE']
+}));
+
 // --- CORS Configuration (The Fix) ---
 // Define all domains allowed to access this API.
 // !!! CRITICAL: The URL below MUST be replaced with your live Angular frontend URL (e.g., https://my-dashboard-xyz.onrender.com)
